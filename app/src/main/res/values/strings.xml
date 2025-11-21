@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">PowerMenuLoop</string>
+    <string name="accessibility_service_description">PowerMenuLoop uses accessibility services to perform global actions.</string>
 </resources>

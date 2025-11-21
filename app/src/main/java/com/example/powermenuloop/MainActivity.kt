@@ -1,6 +1,13 @@
 package com.example.powermenuloop
 
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
+import android.widget.Button
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -16,5 +23,34 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        val button = findViewById<Button>(R.id.btn_accessibility_settings)
+        button.setOnClickListener {
+            openAccessibilitySettings()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (isAccessibilityServiceEnabled(PowerMenuService::class.java)) {
+            Toast.makeText(this, "Accessibility Service is Enabled!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openAccessibilitySettings() {
+        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+        startActivity(intent)
+    }
+
+    private fun isAccessibilityServiceEnabled(service: Class<out Any>): Boolean {
+        val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+        val enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+        for (enabledService in enabledServices) {
+            val serviceInfo = enabledService.resolveInfo.serviceInfo
+            if (serviceInfo.packageName == packageName && serviceInfo.name == service.name) {
+                return true
+            }
+        }
+        return false
     }
 }
