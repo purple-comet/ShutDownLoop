@@ -15,7 +15,8 @@ object OverlayHelper {
     private const val TAG = "OverlayHelper"
     private val uiHandler = Handler(Looper.getMainLooper())
 
-    fun showWarning(context: Context) {
+    // 引数名を text から message に変更して、プロパティとの競合（Val cannot be reassigned）を回避
+    fun showWarning(context: Context, message: String) {
         // UIスレッドで実行
         uiHandler.post {
             try {
@@ -30,7 +31,7 @@ object OverlayHelper {
 
                 // メッセージテキスト
                 val textView = TextView(context).apply {
-                    text = "長時間使用しています。\nそろそろ休憩しましょう。"
+                    text = message // ここで引数のmessageをセット
                     textSize = 24f
                     setTextColor(Color.WHITE)
                     gravity = Gravity.CENTER

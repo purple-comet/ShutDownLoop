@@ -74,7 +74,7 @@ class PowerMenuService : AccessibilityService() {
     }
 
     private fun showWarningOverlay() {
-        OverlayHelper.showWarning(this)
+        OverlayHelper.showWarning(this,"長時間使用しています。\nそろそろ休憩しましょう。")
     }
 
     fun showPowerMenu() {
