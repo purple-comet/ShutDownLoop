@@ -28,6 +28,11 @@ class MainActivity : AppCompatActivity() {
         button.setOnClickListener {
             openAccessibilitySettings()
         }
+
+        val button2 = findViewById<Button>(R.id.btn_display_powermenu)
+        button2.setOnClickListener {
+            openPowerMenu()
+        }
     }
 
     override fun onResume() {
@@ -40,6 +45,15 @@ class MainActivity : AppCompatActivity() {
     private fun openAccessibilitySettings() {
         val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
         startActivity(intent)
+    }
+
+    private fun openPowerMenu() {
+        val service = PowerMenuService.instance
+        if (service != null) {
+            service.showPowerMenu()
+        } else {
+            Toast.makeText(this, "Service is not connected", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun isAccessibilityServiceEnabled(service: Class<out Any>): Boolean {
