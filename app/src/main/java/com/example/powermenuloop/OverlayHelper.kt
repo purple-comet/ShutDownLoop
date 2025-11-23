@@ -15,9 +15,7 @@ object OverlayHelper {
     private const val TAG = "OverlayHelper"
     private val uiHandler = Handler(Looper.getMainLooper())
 
-    // 引数名を text から message に変更して、プロパティとの競合（Val cannot be reassigned）を回避
     fun showWarning(context: Context, message: String) {
-        // UIスレッドで実行
         uiHandler.post {
             try {
                 val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager

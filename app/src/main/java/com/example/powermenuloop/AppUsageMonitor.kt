@@ -106,28 +106,18 @@ class AppUsageMonitor(
 
     fun onPackageChanged(newPackage: String) {
         Log.d(TAG, newPackage)
-        
-        // 自分のアプリ（オーバーレイ通知など）が表示された場合は、監視を中断せずに無視する
-        if (newPackage == "com.example.powermenuloop") return
-
-        // システムUI（電源メニューや通知シェードなど）への遷移は監視を継続する
-        if (newPackage == "com.android.systemui" || newPackage == "android") return
-
         // ループモード中の処理
         if (isLooping) {
-            // 監視中のアプリに戻ろうとした場合（キャンセルや背景タップなど）、再度電源メニューを表示する
-            if (newPackage == currentMonitoredPackage) {
-                Log.d(TAG, "Loop Triggered: Showing Power Menu again")
-                onPowerThresholdReached()
-                return // 監視を停止せずに継続
-            }
-            // ホーム画面や緊急通報など、他のアプリへ遷移した場合は通常通り監視を終了（ループ脱出）
+            Log.d(TAG, "Loop Triggered: Showing Power Menu again")
+            onPowerThresholdReached()
+            return
         }
+        // 中断時のオーバーレイでも監視を続ける
+        if (newPackage == "com.example.powermenuloop") return
 
-        // 同じパッケージ内の画面遷移などは無視
         if (currentMonitoredPackage == newPackage) return
 
-        // 監視中のアプリから別のアプリに移動した場合、監視を停止
+        // 監視ストップ
         if (currentMonitoredPackage != null) {
              val duration = System.currentTimeMillis() - currentSessionStartTime
              Log.d(TAG, "Stopped monitoring $currentMonitoredPackage. Session Duration: ${duration/1000}s")
@@ -143,13 +133,11 @@ class AppUsageMonitor(
     private fun startMonitoring(packageName: String) {
         val now = System.currentTimeMillis()
         
-        // 前回の終了から一定時間（30分）経過していなければ、タイマーを維持する
+        // 前回の終了から一定時間（30分）以上経過しているなら、タイマーリセット
         if (lastSessionEndTime > 0 && (now - lastSessionEndTime) > TIMER_MAINTAIN_DURATION_MS) {
             accumulatedUsage = 0
-            saveUsageData() // リセットも保存
+            saveUsageData()
             Log.d(TAG, "Timer reset due to inactivity (> 30 mins)")
-            // 警告フラグなどもリセット
-            hasWarningShown = false
             isLooping = false
         } else {
             if (accumulatedUsage > 0) {
@@ -159,9 +147,7 @@ class AppUsageMonitor(
 
         currentMonitoredPackage = packageName
         currentSessionStartTime = now
-        
-        // 既に警告済みの時間が経過している場合はフラグを立て直す必要があるが、
-        // ここではシンプルに継続監視とする。
+
 
         Log.d(TAG, "Started monitoring $packageName")
         // 開始時も通知（経過時間はaccumulatedUsage）
