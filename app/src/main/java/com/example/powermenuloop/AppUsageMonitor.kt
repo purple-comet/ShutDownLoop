@@ -88,22 +88,6 @@ class AppUsageMonitor(
         }
     }
 
-    // 現在のステータスを強制的に通知する（UI表示用）
-    fun broadcastCurrentStatus() {
-        val currentPackage = currentMonitoredPackage ?: "None"
-        
-        // 実行中でなければ累積時間のみ、実行中なら＋セッション時間
-        val currentSessionDuration = if (currentMonitoredPackage != null) {
-            System.currentTimeMillis() - currentSessionStartTime
-        } else {
-            0L
-        }
-        val totalElapsed = accumulatedUsage + currentSessionDuration
-        val remaining = max(0, LOOP_THRESHOLD_MS - totalElapsed)
-        
-        onStatusChanged(currentPackage, totalElapsed, remaining)
-    }
-
     fun onPackageChanged(newPackage: String) {
         Log.d(TAG, newPackage)
         // ループモード中の処理
@@ -150,8 +134,6 @@ class AppUsageMonitor(
 
 
         Log.d(TAG, "Started monitoring $packageName")
-        // 開始時も通知（経過時間はaccumulatedUsage）
-        broadcastCurrentStatus()
         
         handler.post(checkTimeRunnable)
     }
@@ -172,6 +154,20 @@ class AppUsageMonitor(
         currentMonitoredPackage = null
         isLooping = false // 監視停止時はループフラグをリセット（再開時に再判定）
         handler.removeCallbacks(checkTimeRunnable)
+    }
+    fun broadcastCurrentStatus() {
+        val currentPackage = currentMonitoredPackage ?: "None"
+
+        // 実行中でなければ累積時間のみ、実行中なら＋セッション時間
+        val currentSessionDuration = if (currentMonitoredPackage != null) {
+            System.currentTimeMillis() - currentSessionStartTime
+        } else {
+            0L
+        }
+        val totalElapsed = accumulatedUsage + currentSessionDuration
+        val remaining = max(0, LOOP_THRESHOLD_MS - totalElapsed)
+
+        onStatusChanged(currentPackage, totalElapsed, remaining)
     }
 
     private fun saveUsageData() {

@@ -25,8 +25,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusTextView: TextView
     private lateinit var settingsTextView: TextView
     private lateinit var remainingTextView: TextView // 追加
-
     companion object {
+        private const val TAG = "PowerMenuLoopMain"
         private const val PERMISSION_REQUEST_LOCATION = 1001
     }
 
@@ -83,8 +83,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        Log.d(TAG, "onResume()")
         if (isAccessibilityServiceEnabled(PowerMenuService::class.java)) {
-            Log.d("MainActivity", "Accessibility Service is ON")
+            Log.d(TAG, "Accessibility Service is ON")
             PowerMenuService.onStatusUpdateListener = { pkg, total, remaining ->
                 runOnUiThread {
                     // ステータスと残り時間をそれぞれのTextViewに表示
@@ -93,7 +94,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } else {
-            Log.d("MainActivity", "Accessibility Service is OFF")
+            Log.d(TAG, "Accessibility Service is OFF")
             statusTextView.text = "Accessibility Service is OFF"
             remainingTextView.text = "Remaining: --"
         }
@@ -101,7 +102,8 @@ class MainActivity : AppCompatActivity() {
     
     override fun onPause() {
         super.onPause()
-        PowerMenuService.onStatusUpdateListener = null
+        Log.d(TAG, "onPause()")
+//        PowerMenuService.onStatusUpdateListener = null
     }
 
     private fun openAccessibilitySettings() {
