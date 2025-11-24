@@ -64,7 +64,7 @@ class AppUsageMonitor(
             // ステータス変更を通知
             onStatusChanged(currentPackage, remaining)
 
-            if (initialWarningMs < currentSessionDuration && !hasShownInitialWarn) {
+            if (initialWarningMs < currentSessionDuration && !hasShownInitialWarn && isNearHome) {
                 Log.d(TAG, "totalElapsed: $totalElapsed ,initialWarning: $initialWarningMs")
                 onWarningThresholdReached("開発するかゲームするか外に出るか。\n何か行動しませんか？")
                 hasShownInitialWarn = true
