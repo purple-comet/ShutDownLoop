@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
+import android.os.Message
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import androidx.core.app.ActivityCompat
@@ -30,8 +31,9 @@ class PowerMenuService : AccessibilityService() {
     private fun initMonitor() {
         appUsageMonitor = AppUsageMonitor(
             context = this, // コンテキストを渡す（SharedPreferences用）
-            onWarningThresholdReached = {
-                showWarningOverlay()
+            isNearHome(),
+            onWarningThresholdReached = { message ->
+                showWarningOverlay(message)
             },
             onPowerThresholdReached = {
                 if (isNearHome()) {
@@ -71,7 +73,7 @@ class PowerMenuService : AccessibilityService() {
         return locGPS ?: locNet
     }
 
-    private fun isNearHome(): Boolean {
+    fun isNearHome(): Boolean {
         val location = getCurrentLocation()
 
         if (location == null) {
@@ -122,8 +124,8 @@ class PowerMenuService : AccessibilityService() {
         return super.onUnbind(intent)
     }
 
-    private fun showWarningOverlay() {
-        OverlayHelper.showWarning(this, "長時間使用しています。\nそろそろ休憩しましょう。")
+    private fun showWarningOverlay(message: String = "長時間使用しています。\nそろそろ休憩しましょう。") {
+        OverlayHelper.showWarning(this, message)
     }
 
     fun showPowerMenu() {

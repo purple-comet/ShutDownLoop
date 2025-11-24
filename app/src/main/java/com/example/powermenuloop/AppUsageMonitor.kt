@@ -9,7 +9,8 @@ import kotlin.math.max
 
 class AppUsageMonitor(
     private val context: Context, // データの保存（SharedPreferences）のためにContextを受け取る
-    private val onWarningThresholdReached: () -> Unit,
+    private val isNearHome: Boolean,
+    private val onWarningThresholdReached: (message: String) -> Unit,
     private val onPowerThresholdReached: () -> Unit,
     // ステータス更新時のコールバック： (PackageName, RemainingTime)
     private val onStatusChanged: (String, Long) -> Unit = { _, _ -> }
@@ -25,12 +26,15 @@ class AppUsageMonitor(
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private var currentMonitoredPackage: String? = null
+
+    private var initialWarningMs = 0
     
     // タイマー関連の変数
     private var accumulatedUsage: Long = 0 // 過去のセッションの累積時間
     private var currentSessionStartTime: Long = 0 // 現在のセッションの開始時間
     private var lastSessionEndTime: Long = 0 // 最後にアプリを閉じた時間
 
+    private var hasShownInitialWarn: Boolean = false
     private var hasWarningShown: Boolean = false
     private var isLooping: Boolean = false
     private val handler = Handler(Looper.getMainLooper())
@@ -60,18 +64,29 @@ class AppUsageMonitor(
             // ステータス変更を通知
             onStatusChanged(currentPackage, remaining)
 
-            if (totalElapsed >= Constants.LOOP_THRESHOLD_MS) {
-                if (!isLooping) {
-                    Log.d(TAG, "Loop threshold reached for $currentPackage")
-                    isLooping = true
-                    onPowerThresholdReached()
+            when(totalElapsed) {
+                in 0..initialWarningMs -> false
+                in initialWarningMs..Constants.WARNING_THRESHOLD_MS -> {
+                    if (isNearHome && !hasShownInitialWarn && initialWarningMs != 0) {
+                        Log.d(TAG, "totalElapsed: $totalElapsed ,initialWarning: $initialWarningMs")
+                        onWarningThresholdReached("開発するかゲームするか外に出るか。\n何か行動しませんか？")
+                        hasShownInitialWarn = true
+                    }
                 }
-            } else if (totalElapsed >= Constants.WARNING_THRESHOLD_MS) {
-                 if (!hasWarningShown) {
-                     Log.d(TAG, "Warning threshold reached for $currentPackage")
-                     onWarningThresholdReached()
-                     hasWarningShown = true
-                 }
+                in Constants.WARNING_THRESHOLD_MS..Constants.LOOP_THRESHOLD_MS -> {
+                    if (hasWarningShown) {
+                        Log.d(TAG, "Warning threshold reset for $currentPackage")
+                        onWarningThresholdReached("長時間使用しています。\nそろそろ休憩しましょう。")
+                        hasWarningShown = false
+                    }
+                }
+                in Constants.LOOP_THRESHOLD_MS..Long.MAX_VALUE -> {
+                    if (!isLooping) {
+                        Log.d(TAG, "Loop threshold reached for $currentPackage")
+                        isLooping = true
+                        onPowerThresholdReached()
+                    }
+                }
             }
 
             // 1秒ごとにチェック
@@ -107,6 +122,7 @@ class AppUsageMonitor(
 
     private fun startMonitoring(packageName: String) {
         val now = System.currentTimeMillis()
+        initialWarningMs = (Constants.INITIAL_WARNING_START_MS..Constants.INITIAL_WARNING_END_MS).random()
         
         // 前回の終了から一定時間（30分）以上経過しているなら、タイマーリセット
         if (lastSessionEndTime > 0 && (now - lastSessionEndTime) > Constants.TIMER_MAINTAIN_DURATION_MS) {
