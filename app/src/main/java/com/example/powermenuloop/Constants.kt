@@ -6,7 +6,7 @@ object Constants {
 
     // 連続起動時間の監視用 (ミリ秒) - 外部（MainActivity）から参照できるようにpublicにする
     const val WARNING_THRESHOLD_MS = 5 * 60 * 1000L // 5分
-    const val LOOP_THRESHOLD_MS = 10 * 1000L   // 10分
+    const val LOOP_THRESHOLD_MS = 10 * 60 * 1000L   // 10分
 
     // アプリを閉じた後、タイマーを維持する時間（30分）
     const val TIMER_MAINTAIN_DURATION_MS = 30 * 60 * 1000L
