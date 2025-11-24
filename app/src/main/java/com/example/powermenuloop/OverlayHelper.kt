@@ -69,7 +69,7 @@ object OverlayHelper {
                     try {
                         rootLayout.animate()
                             .alpha(0f)
-                            .setDuration(500)
+                            .setDuration(1500)
                             .withEndAction {
                                 try {
                                     wm.removeView(rootLayout)

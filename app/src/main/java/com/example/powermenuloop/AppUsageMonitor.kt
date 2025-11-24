@@ -64,15 +64,13 @@ class AppUsageMonitor(
             // ステータス変更を通知
             onStatusChanged(currentPackage, remaining)
 
+            if (initialWarningMs < currentSessionDuration && !hasShownInitialWarn) {
+                Log.d(TAG, "totalElapsed: $totalElapsed ,initialWarning: $initialWarningMs")
+                onWarningThresholdReached("開発するかゲームするか外に出るか。\n何か行動しませんか？")
+                hasShownInitialWarn = true
+            }
             when(totalElapsed) {
-                in 0..initialWarningMs -> false
-                in initialWarningMs..Constants.WARNING_THRESHOLD_MS -> {
-                    if (isNearHome && !hasShownInitialWarn && initialWarningMs != 0) {
-                        Log.d(TAG, "totalElapsed: $totalElapsed ,initialWarning: $initialWarningMs")
-                        onWarningThresholdReached("開発するかゲームするか外に出るか。\n何か行動しませんか？")
-                        hasShownInitialWarn = true
-                    }
-                }
+                in 0..Constants.WARNING_THRESHOLD_MS -> false
                 in Constants.WARNING_THRESHOLD_MS..Constants.LOOP_THRESHOLD_MS -> {
                     if (hasWarningShown) {
                         Log.d(TAG, "Warning threshold reset for $currentPackage")
@@ -157,7 +155,7 @@ class AppUsageMonitor(
             broadcastCurrentStatus()
             Log.d(TAG, "Monitoring stopped (Saved: ${accumulatedUsage/1000}s)")
         }
-        
+        hasShownInitialWarn = false
         currentMonitoredPackage = null
         isLooping = false // 監視停止時はループフラグをリセット（再開時に再判定）
         handler.removeCallbacks(checkTimeRunnable)

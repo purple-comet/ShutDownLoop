@@ -5,8 +5,8 @@ object Constants {
     const val PACKAGE_X = "com.twitter.android"
 
     // 連続起動時間の監視用 (ミリ秒) - 外部（MainActivity）から参照できるようにpublicにする
-    const val INITIAL_WARNING_START_MS = 5 * 1000 // 5秒
-    const val INITIAL_WARNING_END_MS = 10 * 1000 // 10秒
+    const val INITIAL_WARNING_START_MS = 15 * 1000 // 5秒
+    const val INITIAL_WARNING_END_MS = 30 * 1000 // 10秒
     const val WARNING_THRESHOLD_MS = 5 * 60 * 1000L // 5分
     const val LOOP_THRESHOLD_MS = 10 * 60 * 1000L   // 10分
 
