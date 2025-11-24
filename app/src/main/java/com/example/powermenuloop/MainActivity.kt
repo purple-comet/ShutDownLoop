@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var statusTextView: TextView
     private lateinit var settingsTextView: TextView
-    private lateinit var remainingTextView: TextView // 追加
+    private lateinit var remainingTextView: TextView
     companion object {
         private const val TAG = "PowerMenuLoopMain"
         private const val PERMISSION_REQUEST_LOCATION = 1001
@@ -45,8 +45,8 @@ class MainActivity : AppCompatActivity() {
         remainingTextView = findViewById(R.id.tv_remaining) // 紐付け
 
         // 設定値を表示
-        val warningSec = AppUsageMonitor.WARNING_THRESHOLD_MS / 1000
-        val loopSec = AppUsageMonitor.LOOP_THRESHOLD_MS / 1000
+        val warningSec = Constants.WARNING_THRESHOLD_MS / 1000
+        val loopSec = Constants.LOOP_THRESHOLD_MS / 1000
         settingsTextView.text = "Settings: Warn ${warningSec}s / Loop ${loopSec}s"
 
         val button = findViewById<Button>(R.id.btn_accessibility_settings)
@@ -86,10 +86,10 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onResume()")
         if (isAccessibilityServiceEnabled(PowerMenuService::class.java)) {
             Log.d(TAG, "Accessibility Service is ON")
-            PowerMenuService.onStatusUpdateListener = { pkg, total, remaining ->
+            PowerMenuService.onStatusUpdateListener = { pkg, remaining ->
                 runOnUiThread {
                     // ステータスと残り時間をそれぞれのTextViewに表示
-                    statusTextView.text = "Monitoring: $pkg\nTotal: ${total / 1000}s"
+                    statusTextView.text = "Monitoring: $pkg"
                     remainingTextView.text = "Remaining: ${remaining / 1000}s"
                 }
             }
@@ -102,8 +102,6 @@ class MainActivity : AppCompatActivity() {
     
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "onPause()")
-//        PowerMenuService.onStatusUpdateListener = null
     }
 
     private fun openAccessibilitySettings() {

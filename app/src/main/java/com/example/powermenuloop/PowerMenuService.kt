@@ -17,12 +17,7 @@ class PowerMenuService : AccessibilityService() {
         var instance: PowerMenuService? = null
         private const val TAG = "PowerMenuService"
         // 状態更新用のリスナー（引数を3つに変更）
-        var onStatusUpdateListener: ((String, Long, Long) -> Unit)? = null
-
-        // 自宅の位置情報
-        private const val HOME_LATITUDE = 35.79378925
-        private const val HOME_LONGITUDE = 139.96975516
-        private const val RADIUS_METERS = 100f // 100m以内
+        var onStatusUpdateListener: ((String, Long) -> Unit)? = null
     }
 
     private lateinit var appUsageMonitor: AppUsageMonitor
@@ -36,28 +31,17 @@ class PowerMenuService : AccessibilityService() {
         appUsageMonitor = AppUsageMonitor(
             context = this, // コンテキストを渡す（SharedPreferences用）
             onWarningThresholdReached = {
-                if (isNearHome()) {
-                    showWarningOverlay()
-                } else {
-                    // 現在の緯度経度をログに出力（デバッグ用）
-                    val location = getCurrentLocation()
-                    if (location != null) {
-                        Log.d(TAG, "Current Location: lat=${location.latitude}, lng=${location.longitude}")
-                    }
-                    Log.d(TAG, "Not near home, skipping warning.")
-                }
+                showWarningOverlay()
             },
             onPowerThresholdReached = {
-                // ループ中は位置情報チェックをスキップするかどうか？
-                // 一度ループに入ったら家にいなくても出られないのは困るので、ここでもチェックする
                 if (isNearHome()) {
                     showPowerMenu()
                 } else {
                     Log.d(TAG, "Not near home, skipping power menu.")
                 }
             },
-            onStatusChanged = { pkg, total, remaining ->
-                onStatusUpdateListener?.invoke(pkg, total, remaining)
+            onStatusChanged = { pkg, remaining ->
+                onStatusUpdateListener?.invoke(pkg, remaining)
             }
         )
     }
@@ -97,12 +81,12 @@ class PowerMenuService : AccessibilityService() {
         }
 
         val results = FloatArray(1)
-        Location.distanceBetween(location.latitude, location.longitude, HOME_LATITUDE, HOME_LONGITUDE, results)
+        Location.distanceBetween(location.latitude, location.longitude, Constants.HOME_LATITUDE, Constants.HOME_LONGITUDE, results)
         val distance = results[0]
 
         Log.d(TAG, "Current Distance to Home: ${distance}m")
 
-        return distance <= RADIUS_METERS
+        return distance <= Constants.RADIUS_METERS
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {

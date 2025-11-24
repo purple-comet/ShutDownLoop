@@ -11,21 +11,12 @@ class AppUsageMonitor(
     private val context: Context, // データの保存（SharedPreferences）のためにContextを受け取る
     private val onWarningThresholdReached: () -> Unit,
     private val onPowerThresholdReached: () -> Unit,
-    // ステータス更新時のコールバック： (PackageName, TotalElapsed, RemainingTime)
-    private val onStatusChanged: (String, Long, Long) -> Unit = { _, _, _ -> }
+    // ステータス更新時のコールバック： (PackageName, RemainingTime)
+    private val onStatusChanged: (String, Long) -> Unit = { _, _ -> }
 ) {
 
     companion object {
         private const val TAG = "AppUsageMonitor"
-        private const val PACKAGE_YOUTUBE = "com.google.android.youtube"
-        private const val PACKAGE_X = "com.twitter.android"
-        
-        // 連続起動時間の監視用 (ミリ秒) - 外部（MainActivity）から参照できるようにpublicにする
-        const val WARNING_THRESHOLD_MS = 5 * 60 * 1000L // 5分
-        const val LOOP_THRESHOLD_MS = 10 * 60 * 1000L   // 10分
-
-        // アプリを閉じた後、タイマーを維持する時間（30分）
-        private const val TIMER_MAINTAIN_DURATION_MS = 30 * 60 * 1000L
         
         private const val PREFS_NAME = "AppUsageMonitorPrefs"
         private const val KEY_ACCUMULATED_USAGE = "accumulated_usage"
@@ -61,21 +52,21 @@ class AppUsageMonitor(
             val totalElapsed = accumulatedUsage + currentSessionDuration
             
             // 残り時間を計算（負の場合は0）
-            val remaining = max(0, LOOP_THRESHOLD_MS - totalElapsed)
+            val remaining = max(0, Constants.LOOP_THRESHOLD_MS - totalElapsed)
             
             // ログで経過時間を確認 (秒単位)
             Log.d(TAG, "Monitoring $currentPackage: Total ${totalElapsed / 1000}s (Remaining: ${remaining / 1000}s)")
             
             // ステータス変更を通知
-            onStatusChanged(currentPackage, totalElapsed, remaining)
+            onStatusChanged(currentPackage, remaining)
 
-            if (totalElapsed >= LOOP_THRESHOLD_MS) {
+            if (totalElapsed >= Constants.LOOP_THRESHOLD_MS) {
                 if (!isLooping) {
                     Log.d(TAG, "Loop threshold reached for $currentPackage")
                     isLooping = true
                     onPowerThresholdReached()
                 }
-            } else if (totalElapsed >= WARNING_THRESHOLD_MS) {
+            } else if (totalElapsed >= Constants.WARNING_THRESHOLD_MS) {
                  if (!hasWarningShown) {
                      Log.d(TAG, "Warning threshold reached for $currentPackage")
                      onWarningThresholdReached()
@@ -109,7 +100,7 @@ class AppUsageMonitor(
         }
 
         // YouTube または X の場合、監視を開始
-        if (newPackage == PACKAGE_YOUTUBE || newPackage == PACKAGE_X) {
+        if (newPackage == Constants.PACKAGE_YOUTUBE || newPackage == Constants.PACKAGE_X) {
             startMonitoring(newPackage)
         }
     }
@@ -118,7 +109,7 @@ class AppUsageMonitor(
         val now = System.currentTimeMillis()
         
         // 前回の終了から一定時間（30分）以上経過しているなら、タイマーリセット
-        if (lastSessionEndTime > 0 && (now - lastSessionEndTime) > TIMER_MAINTAIN_DURATION_MS) {
+        if (lastSessionEndTime > 0 && (now - lastSessionEndTime) > Constants.TIMER_MAINTAIN_DURATION_MS) {
             accumulatedUsage = 0
             saveUsageData()
             Log.d(TAG, "Timer reset due to inactivity (> 30 mins)")
@@ -165,9 +156,9 @@ class AppUsageMonitor(
             0L
         }
         val totalElapsed = accumulatedUsage + currentSessionDuration
-        val remaining = max(0, LOOP_THRESHOLD_MS - totalElapsed)
+        val remaining = max(0, Constants.LOOP_THRESHOLD_MS - totalElapsed)
 
-        onStatusChanged(currentPackage, totalElapsed, remaining)
+        onStatusChanged(currentPackage, remaining)
     }
 
     private fun saveUsageData() {
