@@ -64,12 +64,12 @@ object OverlayHelper {
                     .setDuration(500)
                     .start()
 
-                // 5秒後にフェードアウトして削除
+                // 10秒後にフェードアウトして削除
                 uiHandler.postDelayed({
                     try {
                         rootLayout.animate()
                             .alpha(0f)
-                            .setDuration(1500)
+                            .setDuration(500)
                             .withEndAction {
                                 try {
                                     wm.removeView(rootLayout)
@@ -81,7 +81,7 @@ object OverlayHelper {
                     } catch (e: Exception) {
                         Log.e(TAG, "Error starting fade out", e)
                     }
-                }, 5000)
+                }, 10000)
             } catch (e: Exception) {
                 Log.e(TAG, "Error showing overlay view", e)
             }
