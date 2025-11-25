@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import kotlin.math.max
+import kotlin.ranges.random
 
 class AppUsageMonitor(
     private val context: Context, // データの保存（SharedPreferences）のためにContextを受け取る
@@ -30,7 +31,6 @@ class AppUsageMonitor(
     private var currentSessionStartTime: Long = 0 // 現在のセッションの開始時間
     private var lastSessionEndTime: Long = 0 // 最後にアプリを閉じた時間
 
-    private var hasShownInitialWarn: Boolean = false
     private var hasWarningShown: Boolean = false
     private var isLooping: Boolean = false
     private val handler = Handler(Looper.getMainLooper())
@@ -60,10 +60,11 @@ class AppUsageMonitor(
             // ステータス変更を通知
             onStatusChanged(currentPackage, remaining)
 
-            if (initialWarningMs < currentSessionDuration && !hasShownInitialWarn && locationHelper.isNearHome()) {
+            if (initialWarningMs < currentSessionDuration && locationHelper.isNearHome()) {
                 Log.d(TAG, "totalElapsed: $totalElapsed ,initialWarning: $initialWarningMs")
                 onWarningThresholdReached("開発するかゲームするか外に出るか。\n何か行動しませんか？")
-                hasShownInitialWarn = true
+
+                initialWarningMs += (Constants.INITIAL_WARNING_START_MS + 10 * 1000..Constants.INITIAL_WARNING_END_MS + 10 * 1000).random()
             }
             when(totalElapsed) {
                 in 0..Constants.WARNING_THRESHOLD_MS -> false
@@ -151,7 +152,6 @@ class AppUsageMonitor(
             broadcastCurrentStatus()
             Log.d(TAG, "Monitoring stopped (Saved: ${accumulatedUsage/1000}s)")
         }
-        hasShownInitialWarn = false
         currentMonitoredPackage = null
         isLooping = false // 監視停止時はループフラグをリセット（再開時に再判定）
         handler.removeCallbacks(checkTimeRunnable)
