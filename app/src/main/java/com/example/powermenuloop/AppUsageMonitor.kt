@@ -18,13 +18,9 @@ class AppUsageMonitor(
 
     companion object {
         private const val TAG = "AppUsageMonitor"
-        
-        private const val PREFS_NAME = "AppUsageMonitorPrefs"
-        private const val KEY_ACCUMULATED_USAGE = "accumulated_usage"
-        private const val KEY_LAST_SESSION_END = "last_session_end"
     }
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
     private var currentMonitoredPackage: String? = null
 
     private var initialWarningMs = 0
@@ -41,8 +37,8 @@ class AppUsageMonitor(
 
     init {
         // 初期化時に保存されたデータを読み込む
-        accumulatedUsage = prefs.getLong(KEY_ACCUMULATED_USAGE, 0)
-        lastSessionEndTime = prefs.getLong(KEY_LAST_SESSION_END, 0)
+        accumulatedUsage = prefs.getLong(Constants.KEY_ACCUMULATED_USAGE, 0)
+        lastSessionEndTime = prefs.getLong(Constants.KEY_LAST_SESSION_END, 0)
         Log.d(TAG, "Loaded accumulated usage: ${accumulatedUsage / 1000}s")
     }
 
@@ -177,8 +173,8 @@ class AppUsageMonitor(
 
     private fun saveUsageData() {
         prefs.edit()
-            .putLong(KEY_ACCUMULATED_USAGE, accumulatedUsage)
-            .putLong(KEY_LAST_SESSION_END, lastSessionEndTime)
+            .putLong(Constants.KEY_ACCUMULATED_USAGE, accumulatedUsage)
+            .putLong(Constants.KEY_LAST_SESSION_END, lastSessionEndTime)
             .apply()
     }
 }

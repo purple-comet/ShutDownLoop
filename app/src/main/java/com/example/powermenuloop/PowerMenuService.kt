@@ -90,6 +90,7 @@ class PowerMenuService : AccessibilityService() {
 
     fun showPowerMenu() {
         Log.d(TAG, "Showing Power Menu")
+        performGlobalAction(GLOBAL_ACTION_HOME)
         performGlobalAction(GLOBAL_ACTION_POWER_DIALOG)
     }
 }

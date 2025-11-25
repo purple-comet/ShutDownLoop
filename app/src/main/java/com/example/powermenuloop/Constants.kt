@@ -18,4 +18,8 @@ object Constants {
     const val HOME_LONGITUDE = 139.96975516
     const val RADIUS_METERS = 100f // 100m以内
 
+    // SharedPreferences keys
+    const val PREFS_NAME = "AppUsageMonitorPrefs"
+    const val KEY_ACCUMULATED_USAGE = "accumulated_usage"
+    const val KEY_LAST_SESSION_END = "last_session_end"
 }

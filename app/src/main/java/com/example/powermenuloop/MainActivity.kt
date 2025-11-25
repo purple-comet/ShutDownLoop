@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.util.Log
+import kotlin.math.max
 
 
 class MainActivity : AppCompatActivity() {
@@ -43,8 +44,8 @@ class MainActivity : AppCompatActivity() {
 
         statusTextView = findViewById(R.id.tv_status)
         settingsTextView = findViewById(R.id.tv_thresholds)
-        remainingTextView = findViewById(R.id.tv_remaining) // 紐付け
-        locationTextView = findViewById(R.id.tv_location) // 紐付け
+        remainingTextView = findViewById(R.id.tv_remaining)
+        locationTextView = findViewById(R.id.tv_location)
 
 
         // 設定値を表示
@@ -62,9 +63,11 @@ class MainActivity : AppCompatActivity() {
             openPowerMenu()
         }
 
-        // 位置情報権限のリクエストボタンを追加したいが、レイアウト変更が必要。
-        // とりあえず起動時にチェックしてリクエストする
+        // 位置情報権限のリクエスト
         checkAndRequestLocationPermission()
+        
+        // 初期状態の更新
+        updateMonitoringStatus()
     }
 
     private fun checkAndRequestLocationPermission() {
@@ -90,19 +93,47 @@ class MainActivity : AppCompatActivity() {
         var location = LocationHelper.getInstance(this).getCurrentLocation()
         locationTextView.text = "Location:\nLatitude: ${location?.latitude ?: "--"}, Longitude: ${location?.longitude ?: "--"}"
 
+        updateMonitoringStatus()
+    }
+
+    private fun updateMonitoringStatus() {
+        // SharedPreferencesから最新の状態を取得して表示（初期表示用、およびサービス未接続時用）
+        val prefs = getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
+        val accumulatedUsage = prefs.getLong(Constants.KEY_ACCUMULATED_USAGE, 0)
+        val lastSessionEndTime = prefs.getLong(Constants.KEY_LAST_SESSION_END, 0)
+
+        // リセット判定（簡易的に実装、Service側とロジックを合わせる）
+        val now = System.currentTimeMillis()
+        var currentAccumulated = accumulatedUsage
+        if (lastSessionEndTime > 0 && (now - lastSessionEndTime) > Constants.TIMER_MAINTAIN_DURATION_MS) {
+            currentAccumulated = 0
+        }
+
+        val estimatedRemaining = max(0, Constants.LOOP_THRESHOLD_MS - currentAccumulated)
+        remainingTextView.text = "Remaining: ${estimatedRemaining / 1000}s"
+
         if (isAccessibilityServiceEnabled(PowerMenuService::class.java)) {
             Log.d(TAG, "Accessibility Service is ON")
-            PowerMenuService.onStatusUpdateListener = { pkg, remaining ->
+            statusTextView.text = "Monitoring Active"
+            
+            PowerMenuService.onStatusUpdateListener = { _, remaining ->
                 runOnUiThread {
                     // ステータスと残り時間をそれぞれのTextViewに表示
-                    statusTextView.text = "Monitoring: $pkg"
+                    // パッケージ名は削除
                     remainingTextView.text = "Remaining: ${remaining / 1000}s"
                 }
+            }
+            
+            val service = PowerMenuService.instance
+            if (service != null) {
+                service.requestStatusUpdate()
+            } else {
+                 Log.d(TAG, "Service instance is null")
             }
         } else {
             Log.d(TAG, "Accessibility Service is OFF")
             statusTextView.text = "Accessibility Service is OFF"
-            remainingTextView.text = "Remaining: --"
+            // OFFのときもRemainingは表示したままにする（直近の保存値）
         }
     }
     
