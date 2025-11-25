@@ -87,7 +87,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume()")
-        var location = PowerMenuService.instance?.getCurrentLocation()
+        var location = LocationHelper.getInstance(this).getCurrentLocation()
         locationTextView.text = "Location:\nLatitude: ${location?.latitude ?: "--"}, Longitude: ${location?.longitude ?: "--"}"
 
         if (isAccessibilityServiceEnabled(PowerMenuService::class.java)) {
