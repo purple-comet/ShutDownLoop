@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusTextView: TextView
     private lateinit var settingsTextView: TextView
     private lateinit var remainingTextView: TextView
+    private lateinit var locationTextView: TextView
     companion object {
         private const val TAG = "PowerMenuLoopMain"
         private const val PERMISSION_REQUEST_LOCATION = 1001
@@ -43,6 +44,8 @@ class MainActivity : AppCompatActivity() {
         statusTextView = findViewById(R.id.tv_status)
         settingsTextView = findViewById(R.id.tv_thresholds)
         remainingTextView = findViewById(R.id.tv_remaining) // 紐付け
+        locationTextView = findViewById(R.id.tv_location) // 紐付け
+
 
         // 設定値を表示
         val warningSec = Constants.WARNING_THRESHOLD_MS / 1000
@@ -84,6 +87,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         Log.d(TAG, "onResume()")
+        var location = PowerMenuService.instance?.getCurrentLocation()
+        locationTextView.text = "Location:\nLatitude: ${location?.latitude ?: "--"}, Longitude: ${location?.longitude ?: "--"}"
+
         if (isAccessibilityServiceEnabled(PowerMenuService::class.java)) {
             Log.d(TAG, "Accessibility Service is ON")
             PowerMenuService.onStatusUpdateListener = { pkg, remaining ->

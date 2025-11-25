@@ -10,6 +10,7 @@ import android.location.LocationManager
 import android.os.Message
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import android.widget.TextView
 import androidx.core.app.ActivityCompat
 
 class PowerMenuService : AccessibilityService() {
@@ -28,10 +29,11 @@ class PowerMenuService : AccessibilityService() {
         initMonitor()
     }
 
+
     private fun initMonitor() {
         appUsageMonitor = AppUsageMonitor(
             context = this, // コンテキストを渡す（SharedPreferences用）
-            isNearHome(),
+            isNearHome = { isNearHome() },
             onWarningThresholdReached = { message ->
                 showWarningOverlay(message)
             },
@@ -55,7 +57,7 @@ class PowerMenuService : AccessibilityService() {
         }
     }
 
-    private fun getCurrentLocation(): Location? {
+    fun getCurrentLocation(): Location? {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         // 権限チェック

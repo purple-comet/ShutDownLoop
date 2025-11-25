@@ -9,7 +9,7 @@ import kotlin.math.max
 
 class AppUsageMonitor(
     private val context: Context, // データの保存（SharedPreferences）のためにContextを受け取る
-    private val isNearHome: Boolean,
+    private val isNearHome: () -> Boolean,
     private val onWarningThresholdReached: (message: String) -> Unit,
     private val onPowerThresholdReached: () -> Unit,
     // ステータス更新時のコールバック： (PackageName, RemainingTime)
@@ -64,7 +64,7 @@ class AppUsageMonitor(
             // ステータス変更を通知
             onStatusChanged(currentPackage, remaining)
 
-            if (initialWarningMs < currentSessionDuration && !hasShownInitialWarn && isNearHome) {
+            if (initialWarningMs < currentSessionDuration && !hasShownInitialWarn && isNearHome()) {
                 Log.d(TAG, "totalElapsed: $totalElapsed ,initialWarning: $initialWarningMs")
                 onWarningThresholdReached("開発するかゲームするか外に出るか。\n何か行動しませんか？")
                 hasShownInitialWarn = true
@@ -72,10 +72,10 @@ class AppUsageMonitor(
             when(totalElapsed) {
                 in 0..Constants.WARNING_THRESHOLD_MS -> false
                 in Constants.WARNING_THRESHOLD_MS..Constants.LOOP_THRESHOLD_MS -> {
-                    if (hasWarningShown) {
+                    if (!hasWarningShown) {
                         Log.d(TAG, "Warning threshold reset for $currentPackage")
                         onWarningThresholdReached("長時間使用しています。\nそろそろ休憩しましょう。")
-                        hasWarningShown = false
+                        hasWarningShown = true
                     }
                 }
                 in Constants.LOOP_THRESHOLD_MS..Long.MAX_VALUE -> {
