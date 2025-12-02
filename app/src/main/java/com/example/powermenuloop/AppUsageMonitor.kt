@@ -44,6 +44,7 @@ class AppUsageMonitor(
 
     private val checkTimeRunnable = object : Runnable {
         override fun run() {
+            if (isLooping) return
             val currentPackage = currentMonitoredPackage ?: return
             
             // 現在のセッション時間を計算
@@ -94,7 +95,7 @@ class AppUsageMonitor(
         // ループモード中の処理
         if (isLooping) {
             Log.d(TAG, "Loop Triggered: Showing Power Menu again")
-            onPowerThresholdReached()
+            if (locationHelper.isNearHome()) onPowerThresholdReached()
             return
         }
         // 中断時のオーバーレイでも監視を続ける
