@@ -39,7 +39,8 @@ class AppUsageMonitor(
         // 初期化時に保存されたデータを読み込む
         accumulatedUsage = prefs.getLong(Constants.KEY_ACCUMULATED_USAGE, 0)
         lastSessionEndTime = prefs.getLong(Constants.KEY_LAST_SESSION_END, 0)
-        Log.d(TAG, "Loaded accumulated usage: ${accumulatedUsage / 1000}s")
+        isLooping = prefs.getBoolean(Constants.KEY_IS_LOOPING, false)
+        Log.d(TAG, "Loaded accumulated usage: ${accumulatedUsage / 1000}s, isLooping: $isLooping")
     }
 
     private val checkTimeRunnable = object : Runnable {
@@ -95,7 +96,14 @@ class AppUsageMonitor(
         // ループモード中の処理
         if (isLooping) {
             Log.d(TAG, "Loop Triggered: Showing Power Menu again")
-            if (locationHelper.isNearHome()) onPowerThresholdReached()
+            if (locationHelper.isNearHome()) {
+                onPowerThresholdReached()
+            } else {
+                // 自宅から離れている場合はループモードを解除
+                Log.d(TAG, "Not near home, resetting loop mode")
+                isLooping = false
+                saveUsageData()
+            }
             return
         }
         // 中断時のオーバーレイでも監視を続ける
@@ -123,12 +131,12 @@ class AppUsageMonitor(
         // 前回の終了から一定時間（30分）以上経過しているなら、タイマーリセット
         if (lastSessionEndTime > 0 && (now - lastSessionEndTime) > Constants.TIMER_MAINTAIN_DURATION_MS) {
             accumulatedUsage = 0
+            isLooping = false
             saveUsageData()
             Log.d(TAG, "Timer reset due to inactivity (> 30 mins)")
-            isLooping = false
         } else {
             if (accumulatedUsage > 0) {
-                Log.d(TAG, "Resuming timer. Accumulated: ${accumulatedUsage / 1000}s")
+                Log.d(TAG, "Resuming timer. Accumulated: ${accumulatedUsage / 1000}s, isLooping: $isLooping")
             }
         }
 
@@ -154,7 +162,6 @@ class AppUsageMonitor(
             Log.d(TAG, "Monitoring stopped (Saved: ${accumulatedUsage/1000}s)")
         }
         currentMonitoredPackage = null
-        isLooping = false // 監視停止時はループフラグをリセット（再開時に再判定）
         handler.removeCallbacks(checkTimeRunnable)
     }
     fun broadcastCurrentStatus() {
@@ -176,6 +183,7 @@ class AppUsageMonitor(
         prefs.edit()
             .putLong(Constants.KEY_ACCUMULATED_USAGE, accumulatedUsage)
             .putLong(Constants.KEY_LAST_SESSION_END, lastSessionEndTime)
+            .putBoolean(Constants.KEY_IS_LOOPING, isLooping)
             .apply()
     }
 }
