@@ -22,4 +22,5 @@ object Constants {
     const val PREFS_NAME = "AppUsageMonitorPrefs"
     const val KEY_ACCUMULATED_USAGE = "accumulated_usage"
     const val KEY_LAST_SESSION_END = "last_session_end"
+    const val KEY_IS_LOOPING = "is_looping"
 }
