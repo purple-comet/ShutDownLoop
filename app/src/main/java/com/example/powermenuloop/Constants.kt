@@ -47,4 +47,59 @@ object Constants {
     const val KEY_LAST_SESSION_END = "last_session_end"
     const val KEY_IS_LOOPING = "is_looping"
     const val KEY_LAST_EXTENSION_USED = "last_extension_used"
+
+    // 10分延長ボタン 統計情報
+    const val KEY_EXTENSION_COUNT_WEEKLY = "extension_count_weekly"
+    const val KEY_EXTENSION_COUNT_MONTHLY = "extension_count_monthly"
+    const val KEY_EXTENSION_COUNT_TOTAL = "extension_count_total"
+    const val KEY_EXTENSION_WEEKLY_RESET_TIME = "extension_weekly_reset_time"
+    const val KEY_EXTENSION_MONTHLY_RESET_TIME = "extension_monthly_reset_time"
+
+    /** 指定時刻以前の直近の月曜日午前4時のタイムスタンプを返す。指定時刻がその週の月曜日4時より前なら前週月曜日4時を返す */
+    fun getLatestWeeklyResetTime(now: Long): Long {
+        val cal = java.util.Calendar.getInstance()
+        cal.timeInMillis = now
+        // 今週月曜日の日付に合わせる
+        val dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK) // Sun=1, Mon=2
+        val daysFromMonday = (dayOfWeek - java.util.Calendar.MONDAY + 7) % 7
+        cal.add(java.util.Calendar.DAY_OF_MONTH, -daysFromMonday)
+        cal.set(java.util.Calendar.HOUR_OF_DAY, RESET_HOUR_MORNING)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        cal.set(java.util.Calendar.MILLISECOND, 0)
+        // もし計算結果が未来なら1週間前に戻す
+        if (cal.timeInMillis > now) {
+            cal.add(java.util.Calendar.WEEK_OF_YEAR, -1)
+        }
+        return cal.timeInMillis
+    }
+
+    /** 指定時刻以前の直近の毎月1日午前4時のタイムスタンプを返す */
+    fun getLatestMonthlyResetTime(now: Long): Long {
+        val cal = java.util.Calendar.getInstance()
+        cal.timeInMillis = now
+        cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+        cal.set(java.util.Calendar.HOUR_OF_DAY, RESET_HOUR_MORNING)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        cal.set(java.util.Calendar.MILLISECOND, 0)
+        // もし計算結果が未来なら1ヶ月前に戻す
+        if (cal.timeInMillis > now) {
+            cal.add(java.util.Calendar.MONTH, -1)
+        }
+        return cal.timeInMillis
+    }
+
+    /** SharedPreferencesから統計情報を読み取る。必要に応じて週次・月次のリセット判定を行い (週次, 月次, 全期間) を返す */
+    fun readExtensionStats(prefs: android.content.SharedPreferences): Triple<Int, Int, Int> {
+        val now = System.currentTimeMillis()
+        val latestWeeklyReset = getLatestWeeklyResetTime(now)
+        val latestMonthlyReset = getLatestMonthlyResetTime(now)
+        val storedWeeklyReset = prefs.getLong(KEY_EXTENSION_WEEKLY_RESET_TIME, 0L)
+        val storedMonthlyReset = prefs.getLong(KEY_EXTENSION_MONTHLY_RESET_TIME, 0L)
+        val weekly = if (latestWeeklyReset > storedWeeklyReset) 0 else prefs.getInt(KEY_EXTENSION_COUNT_WEEKLY, 0)
+        val monthly = if (latestMonthlyReset > storedMonthlyReset) 0 else prefs.getInt(KEY_EXTENSION_COUNT_MONTHLY, 0)
+        val total = prefs.getInt(KEY_EXTENSION_COUNT_TOTAL, 0)
+        return Triple(weekly, monthly, total)
+    }
 }

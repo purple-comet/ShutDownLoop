@@ -92,6 +92,11 @@ class PowerMenuService : AccessibilityService() {
         return if (::appUsageMonitor.isInitialized) appUsageMonitor.extendTime() else false
     }
 
+    fun getExtensionStats(): Triple<Int, Int, Int> {
+        return if (::appUsageMonitor.isInitialized) appUsageMonitor.getExtensionStats()
+        else Triple(0, 0, 0)
+    }
+
     private fun showWarningOverlay(message: String) {
         OverlayHelper.showWarning(this, message)
     }
