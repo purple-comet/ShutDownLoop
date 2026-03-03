@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settingsTextView: TextView
     private lateinit var remainingTextView: TextView
     private lateinit var locationTextView: TextView
+    private lateinit var extendButton: Button
     companion object {
         private const val TAG = "PowerMenuLoopMain"
         private const val PERMISSION_REQUEST_LOCATION = 1001
@@ -46,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         settingsTextView = findViewById(R.id.tv_thresholds)
         remainingTextView = findViewById(R.id.tv_remaining)
         locationTextView = findViewById(R.id.tv_location)
+        extendButton = findViewById(R.id.btn_extend_time)
 
 
         // 設定値を表示
@@ -61,6 +63,10 @@ class MainActivity : AppCompatActivity() {
         val button2 = findViewById<Button>(R.id.btn_display_powermenu)
         button2.setOnClickListener {
             openPowerMenu()
+        }
+
+        extendButton.setOnClickListener {
+            extendTime()
         }
 
         // 位置情報権限のリクエスト
@@ -135,6 +141,9 @@ class MainActivity : AppCompatActivity() {
             statusTextView.text = "Accessibility Service is OFF"
             // OFFのときもRemainingは表示したままにする（直近の保存値）
         }
+
+        // 10分延長ボタンの有効・無効を更新
+        updateExtendButtonState()
     }
     
     override fun onPause() {
@@ -153,6 +162,39 @@ class MainActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "Service is not connected", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun extendTime() {
+        val service = PowerMenuService.instance
+        val success = if (service != null) {
+            service.extendTime()
+        } else {
+            Toast.makeText(this, "Service is not connected", Toast.LENGTH_SHORT).show()
+            false
+        }
+        if (success) {
+            Toast.makeText(this, "10分延長しました", Toast.LENGTH_SHORT).show()
+            updateExtendButtonState()
+        } else {
+            Toast.makeText(this, "現在使用できません", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun updateExtendButtonState() {
+        val service = PowerMenuService.instance
+        val available = if (service != null) {
+            service.isExtensionAvailable()
+        } else {
+            isExtensionAvailableFromPrefs()
+        }
+        extendButton.isEnabled = available
+    }
+
+    private fun isExtensionAvailableFromPrefs(): Boolean {
+        val prefs = getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
+        val lastUsed = prefs.getLong(Constants.KEY_LAST_EXTENSION_USED, 0)
+        if (lastUsed == 0L) return true
+        return System.currentTimeMillis() >= Constants.getNextExtensionResetTime(lastUsed)
     }
 
     private fun isAccessibilityServiceEnabled(service: Class<out Any>): Boolean {
