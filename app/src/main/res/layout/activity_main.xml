@@ -73,6 +73,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_thresholds" />
 
+    <TextView
+        android:id="@+id/tv_extension_remaining"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="14sp"
+        android:visibility="gone"
+        tools:text="Extension: --s remaining"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_remaining" />
+
     <Button
         android:id="@+id/btn_accessibility_settings"
         android:layout_width="wrap_content"
@@ -81,7 +93,7 @@
         android:text="Open Accessibility Settings"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_remaining" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_extension_remaining" />
 
     <Button
         android:id="@+id/btn_display_powermenu"
@@ -98,7 +110,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="10分延長"
+        android:text="add 10min"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_display_powermenu" />
@@ -109,7 +121,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:textSize="14sp"
-        tools:text="10分延長 統計&#10;今週: 0回 | 今月: 0回 | 全期間: 0回"
+        tools:text="10min addition &#10;weekly: 0 | monthly: 0 | all: 0"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_extend_time" />

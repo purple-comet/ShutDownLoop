@@ -10,8 +10,8 @@ class PowerMenuService : AccessibilityService() {
     companion object {
         var instance: PowerMenuService? = null
         private const val TAG = "PowerMenuService"
-        // 状態更新用のリスナー
-        var onStatusUpdateListener: ((String,  Long) -> Unit)? = null
+        // 状態更新用のリスナー： (PackageName, NormalRemaining, ExtensionRemaining?)
+        var onStatusUpdateListener: ((String, Long, Long?) -> Unit)? = null
     }
 
     private lateinit var appUsageMonitor: AppUsageMonitor
@@ -38,8 +38,8 @@ class PowerMenuService : AccessibilityService() {
                     showWarningOverlay("使いすぎには気をつけてくださいね？")
                 }
             },
-            onStatusChanged = { pkg, remaining ->
-                onStatusUpdateListener?.invoke(pkg, remaining)
+            onStatusChanged = { pkg, normalRemaining, extensionRemaining ->
+                onStatusUpdateListener?.invoke(pkg, normalRemaining, extensionRemaining)
             }
         )
     }

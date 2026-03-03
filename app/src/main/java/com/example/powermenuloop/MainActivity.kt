@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -26,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusTextView: TextView
     private lateinit var settingsTextView: TextView
     private lateinit var remainingTextView: TextView
+    private lateinit var extensionRemainingTextView: TextView
     private lateinit var locationTextView: TextView
     private lateinit var extendButton: Button
     private lateinit var extensionStatsTextView: TextView
@@ -47,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         statusTextView = findViewById(R.id.tv_status)
         settingsTextView = findViewById(R.id.tv_thresholds)
         remainingTextView = findViewById(R.id.tv_remaining)
+        extensionRemainingTextView = findViewById(R.id.tv_extension_remaining)
         locationTextView = findViewById(R.id.tv_location)
         extendButton = findViewById(R.id.btn_extend_time)
         extensionStatsTextView = findViewById(R.id.tv_extension_stats)
@@ -124,11 +127,15 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "Accessibility Service is ON")
             statusTextView.text = "Monitoring Active"
             
-            PowerMenuService.onStatusUpdateListener = { _, remaining ->
+            PowerMenuService.onStatusUpdateListener = { _, normalRemaining, extensionRemaining ->
                 runOnUiThread {
-                    // ステータスと残り時間をそれぞれのTextViewに表示
-                    // パッケージ名は削除
-                    remainingTextView.text = "Remaining: ${remaining / 1000}s"
+                    remainingTextView.text = "Remaining: ${normalRemaining / 1000}s"
+                    if (extensionRemaining != null) {
+                        extensionRemainingTextView.visibility = View.VISIBLE
+                        extensionRemainingTextView.text = "Extension: ${extensionRemaining / 1000}s remaining"
+                    } else {
+                        extensionRemainingTextView.visibility = View.GONE
+                    }
                 }
             }
             
@@ -198,7 +205,7 @@ class MainActivity : AppCompatActivity() {
         val stats = PowerMenuService.instance?.getExtensionStats()
             ?: getExtensionStatsFromPrefs()
         extensionStatsTextView.text =
-            "10分延長 統計\n今週: ${stats.first}回 | 今月: ${stats.second}回 | 全期間: ${stats.third}回"
+            "10min addition\nweekly: ${stats.first} | monthly: ${stats.second} | all: ${stats.third}"
     }
 
     private fun getExtensionStatsFromPrefs(): Triple<Int, Int, Int> {
