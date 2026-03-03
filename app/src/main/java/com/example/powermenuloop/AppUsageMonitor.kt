@@ -193,10 +193,41 @@ class AppUsageMonitor(
         }
         hasWarningShown = false
         saveUsageData()
-        prefs.edit().putLong(Constants.KEY_LAST_EXTENSION_USED, System.currentTimeMillis()).apply()
+        val now = System.currentTimeMillis()
+        prefs.edit().putLong(Constants.KEY_LAST_EXTENSION_USED, now).apply()
+        incrementExtensionStats(now)
         Log.d(TAG, "Time extended by 10 minutes. Accumulated: ${accumulatedUsage / 1000}s")
         return true
     }
+
+    /** 統計カウンターをインクリメントし、必要に応じて週次・月次をリセットする */
+    private fun incrementExtensionStats(now: Long) {
+        val latestWeeklyReset = Constants.getLatestWeeklyResetTime(now)
+        val latestMonthlyReset = Constants.getLatestMonthlyResetTime(now)
+
+        val storedWeeklyReset = prefs.getLong(Constants.KEY_EXTENSION_WEEKLY_RESET_TIME, 0L)
+        val storedMonthlyReset = prefs.getLong(Constants.KEY_EXTENSION_MONTHLY_RESET_TIME, 0L)
+
+        val weeklyCount = if (latestWeeklyReset > storedWeeklyReset) 0 else prefs.getInt(Constants.KEY_EXTENSION_COUNT_WEEKLY, 0)
+        val monthlyCount = if (latestMonthlyReset > storedMonthlyReset) 0 else prefs.getInt(Constants.KEY_EXTENSION_COUNT_MONTHLY, 0)
+        val totalCount = prefs.getInt(Constants.KEY_EXTENSION_COUNT_TOTAL, 0)
+
+        prefs.edit()
+            .putInt(Constants.KEY_EXTENSION_COUNT_WEEKLY, weeklyCount + 1)
+            .putInt(Constants.KEY_EXTENSION_COUNT_MONTHLY, monthlyCount + 1)
+            .putInt(Constants.KEY_EXTENSION_COUNT_TOTAL, totalCount + 1)
+            .putLong(Constants.KEY_EXTENSION_WEEKLY_RESET_TIME, latestWeeklyReset)
+            .putLong(Constants.KEY_EXTENSION_MONTHLY_RESET_TIME, latestMonthlyReset)
+            .apply()
+    }
+
+    /**
+     * 統計情報を取得する。リセット判定を行い Triple(週次, 月次, 全期間) を返す。
+     * 各期間のリセット条件：
+     *  - 週次: 毎週月曜日午前4時
+     *  - 月次: 毎月1日午前4時
+     */
+    fun getExtensionStats(): Triple<Int, Int, Int> = Constants.readExtensionStats(prefs)
 
     private fun getNextResetTime(fromTime: Long): Long {
         val cal = Calendar.getInstance()

@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var remainingTextView: TextView
     private lateinit var locationTextView: TextView
     private lateinit var extendButton: Button
+    private lateinit var extensionStatsTextView: TextView
     companion object {
         private const val TAG = "PowerMenuLoopMain"
         private const val PERMISSION_REQUEST_LOCATION = 1001
@@ -48,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         remainingTextView = findViewById(R.id.tv_remaining)
         locationTextView = findViewById(R.id.tv_location)
         extendButton = findViewById(R.id.btn_extend_time)
+        extensionStatsTextView = findViewById(R.id.tv_extension_stats)
 
 
         // 設定値を表示
@@ -144,6 +146,7 @@ class MainActivity : AppCompatActivity() {
 
         // 10分延長ボタンの有効・無効を更新
         updateExtendButtonState()
+        updateExtensionStats()
     }
     
     override fun onPause() {
@@ -175,6 +178,7 @@ class MainActivity : AppCompatActivity() {
         if (success) {
             Toast.makeText(this, "10分延長しました", Toast.LENGTH_SHORT).show()
             updateExtendButtonState()
+            updateExtensionStats()
         } else {
             Toast.makeText(this, "現在使用できません", Toast.LENGTH_SHORT).show()
         }
@@ -188,6 +192,18 @@ class MainActivity : AppCompatActivity() {
             isExtensionAvailableFromPrefs()
         }
         extendButton.isEnabled = available
+    }
+
+    private fun updateExtensionStats() {
+        val stats = PowerMenuService.instance?.getExtensionStats()
+            ?: getExtensionStatsFromPrefs()
+        extensionStatsTextView.text =
+            "10分延長 統計\n今週: ${stats.first}回 | 今月: ${stats.second}回 | 全期間: ${stats.third}回"
+    }
+
+    private fun getExtensionStatsFromPrefs(): Triple<Int, Int, Int> {
+        val prefs = getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE)
+        return Constants.readExtensionStats(prefs)
     }
 
     private fun isExtensionAvailableFromPrefs(): Boolean {
