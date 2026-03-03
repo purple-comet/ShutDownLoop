@@ -179,6 +179,43 @@ class AppUsageMonitor(
         onStatusChanged(currentPackage, remaining)
     }
 
+    fun isExtensionAvailable(): Boolean {
+        val lastUsed = prefs.getLong(Constants.KEY_LAST_EXTENSION_USED, 0)
+        if (lastUsed == 0L) return true
+        return System.currentTimeMillis() >= Constants.getNextExtensionResetTime(lastUsed)
+    }
+
+    fun extendTime(): Boolean {
+        if (!isExtensionAvailable()) return false
+        accumulatedUsage = max(0, accumulatedUsage - Constants.EXTENSION_DURATION_MS)
+        if (isLooping) {
+            isLooping = false
+        }
+        hasWarningShown = false
+        saveUsageData()
+        prefs.edit().putLong(Constants.KEY_LAST_EXTENSION_USED, System.currentTimeMillis()).apply()
+        Log.d(TAG, "Time extended by 10 minutes. Accumulated: ${accumulatedUsage / 1000}s")
+        return true
+    }
+
+    private fun getNextResetTime(fromTime: Long): Long {
+        val cal = Calendar.getInstance()
+        cal.timeInMillis = fromTime
+        val cal4AM = (cal.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, 4); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        val cal4PM = (cal.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, 16); set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }
+        return when {
+            cal4AM.timeInMillis > fromTime -> cal4AM.timeInMillis
+            cal4PM.timeInMillis > fromTime -> cal4PM.timeInMillis
+            else -> cal4AM.apply { add(Calendar.DAY_OF_MONTH, 1) }.timeInMillis
+        }
+    }
+
     private fun saveUsageData() {
         prefs.edit()
             .putLong(Constants.KEY_ACCUMULATED_USAGE, accumulatedUsage)

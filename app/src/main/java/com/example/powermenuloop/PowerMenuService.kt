@@ -84,6 +84,14 @@ class PowerMenuService : AccessibilityService() {
         return super.onUnbind(intent)
     }
 
+    fun isExtensionAvailable(): Boolean {
+        return if (::appUsageMonitor.isInitialized) appUsageMonitor.isExtensionAvailable() else false
+    }
+
+    fun extendTime(): Boolean {
+        return if (::appUsageMonitor.isInitialized) appUsageMonitor.extendTime() else false
+    }
+
     private fun showWarningOverlay(message: String) {
         OverlayHelper.showWarning(this, message)
     }

@@ -18,9 +18,33 @@ object Constants {
     const val HOME_LONGITUDE = 139.96975516
     const val RADIUS_METERS = 100f // 100m以内
 
+    // 10分延長機能
+    const val EXTENSION_DURATION_MS = 10 * 60 * 1000L // 10分
+    const val RESET_HOUR_MORNING = 4  // 午前4時にボタンをリセット
+    const val RESET_HOUR_AFTERNOON = 16 // 午後4時にボタンをリセット
+
+    fun getNextExtensionResetTime(fromTime: Long): Long {
+        val cal = java.util.Calendar.getInstance()
+        cal.timeInMillis = fromTime
+        val cal4AM = (cal.clone() as java.util.Calendar).apply {
+            set(java.util.Calendar.HOUR_OF_DAY, RESET_HOUR_MORNING); set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val cal4PM = (cal.clone() as java.util.Calendar).apply {
+            set(java.util.Calendar.HOUR_OF_DAY, RESET_HOUR_AFTERNOON); set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0)
+        }
+        return when {
+            cal4AM.timeInMillis > fromTime -> cal4AM.timeInMillis
+            cal4PM.timeInMillis > fromTime -> cal4PM.timeInMillis
+            else -> cal4AM.apply { add(java.util.Calendar.DAY_OF_MONTH, 1) }.timeInMillis
+        }
+    }
+
     // SharedPreferences keys
     const val PREFS_NAME = "AppUsageMonitorPrefs"
     const val KEY_ACCUMULATED_USAGE = "accumulated_usage"
     const val KEY_LAST_SESSION_END = "last_session_end"
     const val KEY_IS_LOOPING = "is_looping"
+    const val KEY_LAST_EXTENSION_USED = "last_extension_used"
 }
